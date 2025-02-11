@@ -29,25 +29,38 @@ function Navigation() {
   const NavLinks = () => (
     <>
       {navItems.map(({ path, label }) => (
-        <NavigationMenuItem key={path}>
-          <Link href={path}>
+        isMobile ? (
+          <Button
+            key={path}
+            variant="ghost"
+            className={cn(
+              "w-full justify-start",
+              location === path && "text-primary font-semibold"
+            )}
+            asChild
+          >
+            <Link href={path}>{label}</Link>
+          </Button>
+        ) : (
+          <NavigationMenuItem key={path}>
             <NavigationMenuLink
               className={cn(
                 navigationMenuTriggerStyle(),
                 location === path && "text-primary font-semibold"
               )}
+              onClick={() => window.location.href = path}
             >
               {label}
             </NavigationMenuLink>
-          </Link>
-        </NavigationMenuItem>
+          </NavigationMenuItem>
+        )
       ))}
     </>
   );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-16 items-center justify-between py-4">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">Xcelliti</span>
@@ -73,7 +86,7 @@ function Navigation() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
-                <nav className="flex flex-col gap-4 mt-6">
+                <nav className="flex flex-col gap-2 mt-6">
                   <NavLinks />
                 </nav>
               </SheetContent>

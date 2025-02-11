@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { type BlogPost } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 function Blog() {
@@ -10,7 +11,13 @@ function Blog() {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen container py-20">
+        <div className="flex items-center justify-center">
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -47,6 +54,12 @@ function Blog() {
               transition={{ delay: index * 0.1 }}
             >
               <Card className="h-full flex flex-col">
+                {post.thumbnail && (
+                  <div 
+                    className="h-48 bg-cover bg-center rounded-t-lg"
+                    style={{ backgroundImage: `url(${post.thumbnail})` }}
+                  />
+                )}
                 <CardHeader>
                   <CardTitle className="line-clamp-2">{post.title}</CardTitle>
                   <div className="flex items-center text-sm text-muted-foreground">
@@ -58,9 +71,12 @@ function Blog() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <p className="text-muted-foreground line-clamp-4">
-                    {post.content}
+                  <p className="text-muted-foreground line-clamp-4 mb-4">
+                    {post.excerpt || post.content}
                   </p>
+                  <Button variant="outline" className="w-full">
+                    Read More
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
@@ -75,13 +91,13 @@ function Blog() {
           <p className="text-muted-foreground mb-8">
             Subscribe to our newsletter for the latest insights and updates
           </p>
-          <form className="flex gap-4">
+          <form className="flex gap-4 max-w-md mx-auto">
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-grow rounded-md px-4 py-2"
+              className="flex-grow rounded-md px-4 py-2 border bg-background"
             />
-            <Button>Subscribe</Button>
+            <Button type="submit">Subscribe</Button>
           </form>
         </div>
       </section>

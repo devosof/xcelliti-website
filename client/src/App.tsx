@@ -3,6 +3,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AdminAuthProvider } from "@/hooks/use-admin-auth";
+import { ProtectedAdminRoute } from "@/components/protected-admin-route";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 import Home from "@/pages/home";
@@ -12,6 +14,7 @@ import Careers from "@/pages/careers";
 import Blog from "@/pages/blog";
 import Contact from "@/pages/contact";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminLogin from "@/pages/admin/login";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,7 +29,8 @@ function Router() {
           <Route path="/careers" component={Careers} />
           <Route path="/blog" component={Blog} />
           <Route path="/contact" component={Contact} />
-          <Route path="/admin" component={AdminDashboard} />
+          <Route path="/admin/login" component={AdminLogin} />
+          <ProtectedAdminRoute path="/admin" component={AdminDashboard} />
           <Route component={NotFound} />
         </Switch>
       </main>
@@ -40,7 +44,9 @@ function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="xcelliti-theme">
       <QueryClientProvider client={queryClient}>
-        <Router />
+        <AdminAuthProvider>
+          <Router />
+        </AdminAuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

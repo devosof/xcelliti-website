@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { z } from "zod";
 import {
   Card,
   CardContent,
@@ -29,37 +30,64 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   type BlogPost,
   type Job,
   type ContactSubmission,
+  type Partner,
+  type Client,
+  insertPartnerSchema,
+  insertClientSchema,
 } from "@shared/schema";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Plus } from "lucide-react";
 
 function Dashboard() {
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("blog");
+  const [isAddingPartner, setIsAddingPartner] = useState(false);
+  const [isAddingClient, setIsAddingClient] = useState(false);
+  const [editingPartnerId, setEditingPartnerId] = useState<number | null>(null);
+  const [editingClientId, setEditingClientId] = useState<number | null>(null);
 
-  // Blog Posts Query
+  // Existing queries
   const { data: posts, isLoading: postsLoading, error: postsError } = useQuery<BlogPost[]>({
     queryKey: ["/api/blog-posts", true],
   });
 
-  // Jobs Query
   const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery<Job[]>({
     queryKey: ["/api/jobs", true],
   });
 
-  // Contact Submissions Query
   const { data: submissions, isLoading: submissionsLoading, error: submissionsError } = useQuery<ContactSubmission[]>({
     queryKey: ["/api/contact-submissions"],
   });
 
-  // Mutations
+  // New queries for partners and clients
+  const { data: partners, isLoading: partnersLoading, error: partnersError } = useQuery<Partner[]>({
+    queryKey: ["/api/partners"],
+  });
+
+  const { data: clients, isLoading: clientsLoading, error: clientsError } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
+  });
+
+  // Existing mutations
   const togglePostPublish = useMutation({
     mutationFn: async (post: BlogPost) => {
       await fetch(`/api/blog-posts/${post.id}`, {
@@ -73,13 +101,6 @@ function Dashboard() {
       toast({
         title: "Post updated successfully",
         description: "The post's publish status has been updated.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error updating post",
-        description: "There was a problem updating the post. Please try again.",
-        variant: "destructive",
       });
     },
   });
@@ -99,12 +120,136 @@ function Dashboard() {
         description: "The job's active status has been updated.",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error updating job",
-        description: "There was a problem updating the job. Please try again.",
-        variant: "destructive",
+  });
+
+  // New mutations for partners
+  const addPartner = useMutation({
+    mutationFn: async (data: z.infer<typeof insertPartnerSchema>) => {
+      const res = await fetch("/api/partners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
+      if (!res.ok) throw new Error("Failed to add partner");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/partners"] });
+      setIsAddingPartner(false);
+      toast({
+        title: "Partner added successfully",
+      });
+    },
+  });
+
+  const updatePartner = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<z.infer<typeof insertPartnerSchema>> }) => {
+      const res = await fetch(`/api/partners/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update partner");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/partners"] });
+      setEditingPartnerId(null);
+      toast({
+        title: "Partner updated successfully",
+      });
+    },
+  });
+
+  const deletePartner = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/partners/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete partner");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/partners"] });
+      toast({
+        title: "Partner deleted successfully",
+      });
+    },
+  });
+
+  // New mutations for clients
+  const addClient = useMutation({
+    mutationFn: async (data: z.infer<typeof insertClientSchema>) => {
+      const res = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to add client");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      setIsAddingClient(false);
+      toast({
+        title: "Client added successfully",
+      });
+    },
+  });
+
+  const updateClient = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<z.infer<typeof insertClientSchema>> }) => {
+      const res = await fetch(`/api/clients/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update client");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      setEditingClientId(null);
+      toast({
+        title: "Client updated successfully",
+      });
+    },
+  });
+
+  const deleteClient = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/clients/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete client");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      toast({
+        title: "Client deleted successfully",
+      });
+    },
+  });
+
+  const partnerForm = useForm({
+    resolver: zodResolver(insertPartnerSchema),
+    defaultValues: {
+      name: "",
+      website: "",
+      logo: "",
+      description: "",
+      order: 1,
+      isActive: true,
+    },
+  });
+
+  const clientForm = useForm({
+    resolver: zodResolver(insertClientSchema),
+    defaultValues: {
+      name: "",
+      website: "",
+      logo: "",
+      description: "",
+      order: 1,
     },
   });
 
@@ -139,9 +284,12 @@ function Dashboard() {
         <TabsList className="mb-8">
           <TabsTrigger value="blog">Blog Posts</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
+          <TabsTrigger value="partners">Partners</TabsTrigger>
+          <TabsTrigger value="clients">Clients</TabsTrigger>
           <TabsTrigger value="contacts">Contact Submissions</TabsTrigger>
         </TabsList>
 
+        {/* Existing tabs content */}
         <TabsContent value="blog">
           <Card>
             <CardHeader>
@@ -250,6 +398,355 @@ function Dashboard() {
           </Card>
         </TabsContent>
 
+        {/* New Partners tab */}
+        <TabsContent value="partners">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Partners</CardTitle>
+              <Button
+                onClick={() => setIsAddingPartner(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Add Partner
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {partnersError ? (
+                <ErrorMessage message="Failed to load partners" />
+              ) : partnersLoading ? (
+                <LoadingTable />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {partners?.map((partner) => (
+                      <TableRow key={partner.id}>
+                        <TableCell className="font-medium">{partner.name}</TableCell>
+                        <TableCell>{partner.website}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            partner.isActive
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                          }`}>
+                            {partner.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </TableCell>
+                        <TableCell>{partner.order}</TableCell>
+                        <TableCell className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditingPartnerId(partner.id)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => deletePartner.mutate(partner.id)}
+                            disabled={deletePartner.isPending}
+                          >
+                            {deletePartner.isPending ? "Deleting..." : "Delete"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Add/Edit Partner Dialog */}
+          <Dialog
+            open={isAddingPartner || editingPartnerId !== null}
+            onOpenChange={() => {
+              setIsAddingPartner(false);
+              setEditingPartnerId(null);
+              partnerForm.reset();
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {isAddingPartner ? "Add Partner" : "Edit Partner"}
+                </DialogTitle>
+              </DialogHeader>
+
+              <Form {...partnerForm}>
+                <form
+                  onSubmit={partnerForm.handleSubmit((data) => {
+                    if (editingPartnerId) {
+                      updatePartner.mutate({ id: editingPartnerId, data });
+                    } else {
+                      addPartner.mutate(data);
+                    }
+                  })}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={partnerForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={partnerForm.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="url" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={partnerForm.control}
+                    name="logo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Logo URL</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="url" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={partnerForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={partnerForm.control}
+                    name="order"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Display Order</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" min="1" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      disabled={addPartner.isPending || updatePartner.isPending}
+                    >
+                      {addPartner.isPending || updatePartner.isPending
+                        ? "Saving..."
+                        : "Save Partner"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* New Clients tab */}
+        <TabsContent value="clients">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Clients</CardTitle>
+              <Button
+                onClick={() => setIsAddingClient(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Add Client
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {clientsError ? (
+                <ErrorMessage message="Failed to load clients" />
+              ) : clientsLoading ? (
+                <LoadingTable />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {clients?.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell className="font-medium">{client.name}</TableCell>
+                        <TableCell>{client.website}</TableCell>
+                        <TableCell>{client.order}</TableCell>
+                        <TableCell className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditingClientId(client.id)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => deleteClient.mutate(client.id)}
+                            disabled={deleteClient.isPending}
+                          >
+                            {deleteClient.isPending ? "Deleting..." : "Delete"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Add/Edit Client Dialog */}
+          <Dialog
+            open={isAddingClient || editingClientId !== null}
+            onOpenChange={() => {
+              setIsAddingClient(false);
+              setEditingClientId(null);
+              clientForm.reset();
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {isAddingClient ? "Add Client" : "Edit Client"}
+                </DialogTitle>
+              </DialogHeader>
+
+              <Form {...clientForm}>
+                <form
+                  onSubmit={clientForm.handleSubmit((data) => {
+                    if (editingClientId) {
+                      updateClient.mutate({ id: editingClientId, data });
+                    } else {
+                      addClient.mutate(data);
+                    }
+                  })}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={clientForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={clientForm.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="url" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={clientForm.control}
+                    name="logo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Logo URL</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="url" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={clientForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={clientForm.control}
+                    name="order"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Display Order</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" min="1" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      disabled={addClient.isPending || updateClient.isPending}
+                    >
+                      {addClient.isPending || updateClient.isPending
+                        ? "Saving..."
+                        : "Save Client"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* Contacts tab */}
         <TabsContent value="contacts">
           <Card>
             <CardHeader>

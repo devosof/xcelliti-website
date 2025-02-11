@@ -31,29 +31,31 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import {
   type BlogPost,
   type Job,
   type ContactSubmission,
 } from "@shared/schema";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 function Dashboard() {
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("blog");
 
   // Blog Posts Query
-  const { data: posts } = useQuery<BlogPost[]>({
+  const { data: posts, isLoading: postsLoading, error: postsError } = useQuery<BlogPost[]>({
     queryKey: ["/api/blog-posts", true],
   });
 
   // Jobs Query
-  const { data: jobs } = useQuery<Job[]>({
+  const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery<Job[]>({
     queryKey: ["/api/jobs", true],
   });
 
   // Contact Submissions Query
-  const { data: submissions } = useQuery<ContactSubmission[]>({
+  const { data: submissions, isLoading: submissionsLoading, error: submissionsError } = useQuery<ContactSubmission[]>({
     queryKey: ["/api/contact-submissions"],
   });
 
@@ -68,7 +70,17 @@ function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
-      toast({ title: "Post updated successfully" });
+      toast({
+        title: "Post updated successfully",
+        description: "The post's publish status has been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error updating post",
+        description: "There was a problem updating the post. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -82,9 +94,36 @@ function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      toast({ title: "Job updated successfully" });
+      toast({
+        title: "Job updated successfully",
+        description: "The job's active status has been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error updating job",
+        description: "There was a problem updating the job. Please try again.",
+        variant: "destructive",
+      });
     },
   });
+
+  const LoadingTable = () => (
+    <div className="space-y-4">
+      {Array(5).fill(null).map((_, i) => (
+        <div key={i} className="flex items-center space-x-4">
+          <Skeleton className="h-12 w-full" />
+        </div>
+      ))}
+    </div>
+  );
+
+  const ErrorMessage = ({ message }: { message: string }) => (
+    <div className="flex items-center justify-center p-8 text-destructive">
+      <AlertCircle className="mr-2 h-4 w-4" />
+      <p>{message}</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen p-8">
@@ -97,7 +136,7 @@ function Dashboard() {
       </motion.h1>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList>
+        <TabsList className="mb-8">
           <TabsTrigger value="blog">Blog Posts</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
           <TabsTrigger value="contacts">Contact Submissions</TabsTrigger>
@@ -109,39 +148,52 @@ function Dashboard() {
               <CardTitle>Blog Posts</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Published</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {posts?.map((post) => (
-                    <TableRow key={post.id}>
-                      <TableCell>{post.title}</TableCell>
-                      <TableCell>{post.author}</TableCell>
-                      <TableCell>
-                        {post.isPublished ? "Published" : "Draft"}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(post.publishedAt), "PP")}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          onClick={() => togglePostPublish.mutate(post)}
-                        >
-                          Toggle Publish
-                        </Button>
-                      </TableCell>
+              {postsError ? (
+                <ErrorMessage message="Failed to load blog posts" />
+              ) : postsLoading ? (
+                <LoadingTable />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Author</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {posts?.map((post) => (
+                      <TableRow key={post.id}>
+                        <TableCell className="font-medium">{post.title}</TableCell>
+                        <TableCell>{post.author}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            post.isPublished
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
+                          }`}>
+                            {post.isPublished ? "Published" : "Draft"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(post.publishedAt), "PP")}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            onClick={() => togglePostPublish.mutate(post)}
+                            disabled={togglePostPublish.isPending}
+                          >
+                            {togglePostPublish.isPending ? "Updating..." : "Toggle Publish"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -152,35 +204,48 @@ function Dashboard() {
               <CardTitle>Jobs</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {jobs?.map((job) => (
-                    <TableRow key={job.id}>
-                      <TableCell>{job.title}</TableCell>
-                      <TableCell>{job.location}</TableCell>
-                      <TableCell>
-                        {job.isActive ? "Active" : "Inactive"}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          onClick={() => toggleJobActive.mutate(job)}
-                        >
-                          Toggle Active
-                        </Button>
-                      </TableCell>
+              {jobsError ? (
+                <ErrorMessage message="Failed to load jobs" />
+              ) : jobsLoading ? (
+                <LoadingTable />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {jobs?.map((job) => (
+                      <TableRow key={job.id}>
+                        <TableCell className="font-medium">{job.title}</TableCell>
+                        <TableCell>{job.location}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            job.isActive
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                          }`}>
+                            {job.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            onClick={() => toggleJobActive.mutate(job)}
+                            disabled={toggleJobActive.isPending}
+                          >
+                            {toggleJobActive.isPending ? "Updating..." : "Toggle Active"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -191,46 +256,52 @@ function Dashboard() {
               <CardTitle>Contact Submissions</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {submissions?.map((submission) => (
-                    <TableRow key={submission.id}>
-                      <TableCell>{submission.name}</TableCell>
-                      <TableCell>{submission.email}</TableCell>
-                      <TableCell>{submission.phone || "N/A"}</TableCell>
-                      <TableCell>
-                        {format(new Date(submission.createdAt), "PP")}
-                      </TableCell>
-                      <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline">View Message</Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Message from {submission.name}</DialogTitle>
-                            </DialogHeader>
-                            <div className="mt-4">
-                              <p className="whitespace-pre-wrap">
-                                {submission.message}
-                              </p>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
+              {submissionsError ? (
+                <ErrorMessage message="Failed to load contact submissions" />
+              ) : submissionsLoading ? (
+                <LoadingTable />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {submissions?.map((submission) => (
+                      <TableRow key={submission.id}>
+                        <TableCell className="font-medium">{submission.name}</TableCell>
+                        <TableCell>{submission.email}</TableCell>
+                        <TableCell>{submission.phone || "N/A"}</TableCell>
+                        <TableCell>
+                          {format(new Date(submission.createdAt), "PP")}
+                        </TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline">View Message</Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-lg">
+                              <DialogHeader>
+                                <DialogTitle>Message from {submission.name}</DialogTitle>
+                              </DialogHeader>
+                              <div className="mt-4">
+                                <p className="whitespace-pre-wrap">
+                                  {submission.message}
+                                </p>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type Client } from "@shared/schema";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ClientCarouselProps {
   clients: Client[];
@@ -54,13 +55,15 @@ function ClientCarousel({ clients }: ClientCarouselProps) {
               src={client.logo}
               alt={client.name}
               className="w-full h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-200"
+              loading="lazy"
             />
             {client.website && (
               <a
                 href={client.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg"
+                aria-label={`Visit ${client.name}'s website`}
               >
                 Visit Website
               </a>

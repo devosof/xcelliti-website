@@ -4,17 +4,19 @@ import { type BlogPost } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function Blog() {
-  const { data: posts, isLoading } = useQuery<BlogPost[]>({
+  const { data: posts, isLoading, error } = useQuery<BlogPost[]>({
     queryKey: ["/api/blog-posts"],
   });
 
-  if (isLoading) {
+  if (error) {
     return (
       <div className="min-h-screen container py-20">
-        <div className="flex items-center justify-center">
-          Loading...
+        <div className="flex flex-col items-center justify-center">
+          <h2 className="text-2xl font-bold mb-4">Error Loading Blog Posts</h2>
+          <p className="text-muted-foreground">Please try again later.</p>
         </div>
       </div>
     );
@@ -46,41 +48,58 @@ function Blog() {
       {/* Blog Posts Grid */}
       <section className="container py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts?.map((post, index) => (
-            <motion.div
-              key={post.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="h-full flex flex-col">
-                {post.thumbnail && (
-                  <div 
-                    className="h-48 bg-cover bg-center rounded-t-lg"
-                    style={{ backgroundImage: `url(${post.thumbnail})` }}
-                  />
-                )}
+          {isLoading ? (
+            // Loading skeletons
+            Array(6).fill(null).map((_, index) => (
+              <Card key={index} className="h-full flex flex-col">
+                <Skeleton className="h-48 rounded-t-lg" />
                 <CardHeader>
-                  <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <span>{post.author}</span>
-                    <span className="mx-2">•</span>
-                    <span>
-                      {format(new Date(post.publishedAt), "MMMM d, yyyy")}
-                    </span>
-                  </div>
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <p className="text-muted-foreground line-clamp-4 mb-4">
-                    {post.excerpt || post.content}
-                  </p>
-                  <Button variant="outline" className="w-full">
-                    Read More
-                  </Button>
+                  <Skeleton className="h-20 mb-4" />
+                  <Skeleton className="h-10" />
                 </CardContent>
               </Card>
-            </motion.div>
-          ))}
+            ))
+          ) : (
+            posts?.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="h-full flex flex-col">
+                  {post.thumbnail && (
+                    <div 
+                      className="h-48 bg-cover bg-center rounded-t-lg"
+                      style={{ backgroundImage: `url(${post.thumbnail})` }}
+                    />
+                  )}
+                  <CardHeader>
+                    <CardTitle className="line-clamp-2">{post.title}</CardTitle>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <span>{post.author}</span>
+                      <span className="mx-2">•</span>
+                      <span>
+                        {format(new Date(post.publishedAt), "MMMM d, yyyy")}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-muted-foreground line-clamp-4 mb-4">
+                      {post.excerpt || post.content}
+                    </p>
+                    <Button variant="outline" className="w-full">
+                      Read More
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))
+          )}
         </div>
       </section>
 

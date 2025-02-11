@@ -16,7 +16,7 @@ function ServiceCards({ services }: ServiceCardsProps) {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.15
       }
     }
   };
@@ -42,7 +42,7 @@ function ServiceCards({ services }: ServiceCardsProps) {
         >
           <Card
             className={cn(
-              "relative h-[300px] cursor-pointer overflow-hidden group",
+              "relative h-[400px] cursor-pointer overflow-hidden group",
               "transform transition-transform duration-500 ease-out",
               hoveredId === service.id && "scale-[1.02]"
             )}
@@ -53,23 +53,40 @@ function ServiceCards({ services }: ServiceCardsProps) {
               className="absolute inset-0 bg-cover bg-center transform transition-transform duration-700 group-hover:scale-110"
               style={{ backgroundImage: `url(${service.image})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/30" />
             </div>
 
-            <div className="relative h-full flex flex-col justify-between p-6 text-white">
-              <h3 className="text-2xl font-bold">{service.title}</h3>
+            <div className="relative h-full flex flex-col justify-between p-8 text-white">
+              <div>
+                <h3 className="text-2xl font-bold mb-4">{service.title}</h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: hoveredId === service.id ? 1 : 0.8,
+                    y: hoveredId === service.id ? 0 : 10
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="text-lg leading-relaxed"
+                >
+                  {service.description}
+                </motion.p>
+              </div>
 
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
+              <motion.div
+                initial={{ opacity: 0 }}
                 animate={{ 
-                  opacity: hoveredId === service.id ? 1 : 0,
-                  y: hoveredId === service.id ? 0 : 20
+                  opacity: hoveredId === service.id ? 1 : 0
                 }}
                 transition={{ duration: 0.3 }}
-                className="text-sm leading-relaxed"
+                className="mt-6"
               >
-                {service.description}
-              </motion.p>
+                <a
+                  href="/services"
+                  className="inline-block bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-2 rounded-md transition-colors"
+                >
+                  Learn More
+                </a>
+              </motion.div>
             </div>
           </Card>
         </motion.div>

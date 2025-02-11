@@ -30,28 +30,29 @@ function Navigation() {
     <>
       {navItems.map(({ path, label }) => (
         isMobile ? (
-          <Button
-            key={path}
-            variant="ghost"
-            className={cn(
-              "w-full justify-start",
-              location === path && "text-primary font-semibold"
-            )}
-            asChild
-          >
-            <Link href={path}>{label}</Link>
-          </Button>
-        ) : (
-          <NavigationMenuItem key={path}>
-            <NavigationMenuLink
+          <Link key={path} href={path}>
+            <Button
+              variant="ghost"
               className={cn(
-                navigationMenuTriggerStyle(),
+                "w-full justify-start",
                 location === path && "text-primary font-semibold"
               )}
-              onClick={() => window.location.href = path}
             >
               {label}
-            </NavigationMenuLink>
+            </Button>
+          </Link>
+        ) : (
+          <NavigationMenuItem key={path}>
+            <Link href={path}>
+              <NavigationMenuLink
+                className={cn(
+                  navigationMenuTriggerStyle(),
+                  location === path && "text-primary font-semibold"
+                )}
+              >
+                {label}
+              </NavigationMenuLink>
+            </Link>
           </NavigationMenuItem>
         )
       ))}

@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import {
   Card,
@@ -55,7 +55,7 @@ import {
   insertPartnerSchema,
   insertClientSchema,
 } from "@shared/schema";
-import { AlertCircle, CheckCircle2, Plus } from "lucide-react";
+import { AlertCircle, CheckCircle2, Plus, Loader2 } from "lucide-react";
 
 function Dashboard() {
   const { toast } = useToast();
@@ -78,7 +78,7 @@ function Dashboard() {
     queryKey: ["/api/contact-submissions"],
   });
 
-  // New queries for partners and clients
+  // Partner and client queries
   const { data: partners, isLoading: partnersLoading, error: partnersError } = useQuery<Partner[]>({
     queryKey: ["/api/partners"],
   });
@@ -87,42 +87,61 @@ function Dashboard() {
     queryKey: ["/api/clients"],
   });
 
-  // Existing mutations
-  const togglePostPublish = useMutation({
-    mutationFn: async (post: BlogPost) => {
-      await fetch(`/api/blog-posts/${post.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublished: !post.isPublished }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
-      toast({
-        title: "Post updated successfully",
-        description: "The post's publish status has been updated.",
-      });
+  const partnerForm = useForm({
+    resolver: zodResolver(insertPartnerSchema),
+    defaultValues: {
+      name: "",
+      website: "",
+      logo: "",
+      description: "",
+      order: 1,
+      isActive: true,
     },
   });
 
-  const toggleJobActive = useMutation({
-    mutationFn: async (job: Job) => {
-      await fetch(`/api/jobs/${job.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !job.isActive }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      toast({
-        title: "Job updated successfully",
-        description: "The job's active status has been updated.",
-      });
+  const clientForm = useForm({
+    resolver: zodResolver(insertClientSchema),
+    defaultValues: {
+      name: "",
+      website: "",
+      logo: "",
+      description: "",
+      order: 1,
     },
   });
 
-  // New mutations for partners
+  useEffect(() => {
+    if (editingPartnerId && partners) {
+      const partner = partners.find((p) => p.id === editingPartnerId);
+      if (partner) {
+        partnerForm.reset({
+          name: partner.name,
+          website: partner.website || "",
+          logo: partner.logo || "",
+          description: partner.description || "",
+          order: partner.order,
+          isActive: partner.isActive,
+        });
+      }
+    }
+  }, [editingPartnerId, partners, partnerForm]);
+
+  useEffect(() => {
+    if (editingClientId && clients) {
+      const client = clients.find((c) => c.id === editingClientId);
+      if (client) {
+        clientForm.reset({
+          name: client.name,
+          website: client.website || "",
+          logo: client.logo || "",
+          description: client.description || "",
+          order: client.order,
+        });
+      }
+    }
+  }, [editingClientId, clients, clientForm]);
+
+  // Partner mutations
   const addPartner = useMutation({
     mutationFn: async (data: z.infer<typeof insertPartnerSchema>) => {
       const res = await fetch("/api/partners", {
@@ -176,7 +195,7 @@ function Dashboard() {
     },
   });
 
-  // New mutations for clients
+  // Client mutations
   const addClient = useMutation({
     mutationFn: async (data: z.infer<typeof insertClientSchema>) => {
       const res = await fetch("/api/clients", {
@@ -230,26 +249,38 @@ function Dashboard() {
     },
   });
 
-  const partnerForm = useForm({
-    resolver: zodResolver(insertPartnerSchema),
-    defaultValues: {
-      name: "",
-      website: "",
-      logo: "",
-      description: "",
-      order: 1,
-      isActive: true,
+  // Existing mutations
+  const togglePostPublish = useMutation({
+    mutationFn: async (post: BlogPost) => {
+      await fetch(`/api/blog-posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: !post.isPublished }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
+      toast({
+        title: "Post updated successfully",
+        description: "The post's publish status has been updated.",
+      });
     },
   });
 
-  const clientForm = useForm({
-    resolver: zodResolver(insertClientSchema),
-    defaultValues: {
-      name: "",
-      website: "",
-      logo: "",
-      description: "",
-      order: 1,
+  const toggleJobActive = useMutation({
+    mutationFn: async (job: Job) => {
+      await fetch(`/api/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !job.isActive }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      toast({
+        title: "Job updated successfully",
+        description: "The job's active status has been updated.",
+      });
     },
   });
 
@@ -289,7 +320,6 @@ function Dashboard() {
           <TabsTrigger value="contacts">Contact Submissions</TabsTrigger>
         </TabsList>
 
-        {/* Existing tabs content */}
         <TabsContent value="blog">
           <Card>
             <CardHeader>
@@ -398,7 +428,6 @@ function Dashboard() {
           </Card>
         </TabsContent>
 
-        {/* New Partners tab */}
         <TabsContent value="partners">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -445,15 +474,27 @@ function Dashboard() {
                           <Button
                             variant="outline"
                             onClick={() => setEditingPartnerId(partner.id)}
+                            disabled={updatePartner.isPending || deletePartner.isPending}
                           >
-                            Edit
+                            {updatePartner.isPending && editingPartnerId === partner.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              "Edit"
+                            )}
                           </Button>
                           <Button
                             variant="destructive"
                             onClick={() => deletePartner.mutate(partner.id)}
-                            disabled={deletePartner.isPending}
+                            disabled={deletePartner.isPending || updatePartner.isPending}
                           >
-                            {deletePartner.isPending ? "Deleting..." : "Delete"}
+                            {deletePartner.isPending ? (
+                              <div className="flex items-center">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Deleting...
+                              </div>
+                            ) : (
+                              "Delete"
+                            )}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -464,7 +505,6 @@ function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Add/Edit Partner Dialog */}
           <Dialog
             open={isAddingPartner || editingPartnerId !== null}
             onOpenChange={() => {
@@ -561,14 +601,34 @@ function Dashboard() {
                     )}
                   />
 
+                  <FormField
+                    control={partnerForm.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Is Active</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="checkbox" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <DialogFooter>
                     <Button
                       type="submit"
                       disabled={addPartner.isPending || updatePartner.isPending}
+                      className="w-full"
                     >
-                      {addPartner.isPending || updatePartner.isPending
-                        ? "Saving..."
-                        : "Save Partner"}
+                      {addPartner.isPending || updatePartner.isPending ? (
+                        <div className="flex items-center">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          {isAddingPartner ? "Adding..." : "Updating..."}
+                        </div>
+                      ) : (
+                        isAddingPartner ? "Add Partner" : "Update Partner"
+                      )}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -577,7 +637,6 @@ function Dashboard() {
           </Dialog>
         </TabsContent>
 
-        {/* New Clients tab */}
         <TabsContent value="clients">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -614,15 +673,27 @@ function Dashboard() {
                           <Button
                             variant="outline"
                             onClick={() => setEditingClientId(client.id)}
+                            disabled={updateClient.isPending || deleteClient.isPending}
                           >
-                            Edit
+                            {updateClient.isPending && editingClientId === client.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              "Edit"
+                            )}
                           </Button>
                           <Button
                             variant="destructive"
                             onClick={() => deleteClient.mutate(client.id)}
-                            disabled={deleteClient.isPending}
+                            disabled={deleteClient.isPending || updateClient.isPending}
                           >
-                            {deleteClient.isPending ? "Deleting..." : "Delete"}
+                            {deleteClient.isPending ? (
+                              <div className="flex items-center">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Deleting...
+                              </div>
+                            ) : (
+                              "Delete"
+                            )}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -633,7 +704,6 @@ function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Add/Edit Client Dialog */}
           <Dialog
             open={isAddingClient || editingClientId !== null}
             onOpenChange={() => {
@@ -734,10 +804,16 @@ function Dashboard() {
                     <Button
                       type="submit"
                       disabled={addClient.isPending || updateClient.isPending}
+                      className="w-full"
                     >
-                      {addClient.isPending || updateClient.isPending
-                        ? "Saving..."
-                        : "Save Client"}
+                      {addClient.isPending || updateClient.isPending ? (
+                        <div className="flex items-center">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          {isAddingClient ? "Adding..." : "Updating..."}
+                        </div>
+                      ) : (
+                        isAddingClient ? "Add Client" : "Update Client"
+                      )}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -746,7 +822,6 @@ function Dashboard() {
           </Dialog>
         </TabsContent>
 
-        {/* Contacts tab */}
         <TabsContent value="contacts">
           <Card>
             <CardHeader>

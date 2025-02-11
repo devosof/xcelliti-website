@@ -17,14 +17,19 @@ const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  const { data: admin, isLoading, error } = useQuery<Admin | null>({
+  const {
+    data: admin,
+    error,
+    isLoading,
+  } = useQuery<Admin | null>({
     queryKey: ["/api/admin/me"],
     queryFn: async () => {
       try {
         const res = await fetch("/api/admin/me");
         if (!res.ok) {
           if (res.status === 401) return null;
-          throw new Error("Failed to fetch admin");
+          const error = await res.json();
+          throw new Error(error.message || "Failed to fetch admin");
         }
         return res.json();
       } catch (error) {

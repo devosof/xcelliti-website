@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -27,6 +28,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function AdminLogin() {
   const [, setLocation] = useLocation();
   const { login, admin, isLoading } = useAdminAuth();
+  const { toast } = useToast();
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -45,15 +47,22 @@ export default function AdminLogin() {
   const onSubmit = async (data: LoginForm) => {
     try {
       await login(data);
+      toast({
+        title: "Login successful",
+        description: "Welcome back to the admin dashboard!",
+      });
     } catch (error) {
-      // Error is handled by the mutation
+      console.error("Login error:", error);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <Loader2 className="h-8 w-4 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking authentication...</p>
+        </div>
       </div>
     );
   }
@@ -63,6 +72,7 @@ export default function AdminLogin() {
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
         className="flex items-center justify-center p-8"
       >
         <div className="w-full max-w-md space-y-8">
@@ -82,9 +92,14 @@ export default function AdminLogin() {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin" {...field} />
+                      <Input
+                        {...field}
+                        placeholder="admin"
+                        disabled={form.formState.isSubmitting}
+                        className="bg-background"
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -96,9 +111,15 @@ export default function AdminLogin() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input
+                        {...field}
+                        type="password"
+                        placeholder="••••••••"
+                        disabled={form.formState.isSubmitting}
+                        className="bg-background"
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -109,7 +130,10 @@ export default function AdminLogin() {
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Signing in...
+                  </div>
                 ) : (
                   "Sign In"
                 )}
@@ -120,8 +144,9 @@ export default function AdminLogin() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
         className="hidden md:flex items-center justify-center bg-primary text-primary-foreground p-8"
       >
         <div className="max-w-md space-y-6 text-center">

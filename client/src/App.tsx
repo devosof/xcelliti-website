@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { ProtectedAdminRoute } from "@/components/protected-admin-route";
+import { ErrorBoundary } from "@/components/error-boundary";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 import Home from "@/pages/home";
@@ -42,13 +43,15 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="xcelliti-theme">
-      <QueryClientProvider client={queryClient}>
-        <AdminAuthProvider>
-          <Router />
-        </AdminAuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="system" storageKey="xcelliti-theme">
+        <QueryClientProvider client={queryClient}>
+          <AdminAuthProvider>
+            <Router />
+          </AdminAuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

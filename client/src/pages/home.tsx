@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import ServiceSlider from "@/components/service-slider";
+import { motion } from "framer-motion";
+import HeroSection from "@/components/hero-section";
+import PartnersSection from "@/components/partners-section";
 import ServiceCards from "@/components/service-cards";
 import ClientCarousel from "@/components/client-carousel";
 import ContactForm from "@/components/contact-form";
+import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Service, type Client } from "@shared/schema";
 
@@ -18,69 +20,145 @@ function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      {servicesLoading ? (
-        <div className="h-[600px] bg-muted animate-pulse" />
-      ) : (
-        services && <ServiceSlider services={services} />
-      )}
+      <HeroSection />
 
       {/* Services Section */}
-      <section className="container py-24">
-        <h2 className="text-4xl font-bold text-center mb-12">Our Services</h2>
-        {servicesLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array(3).fill(null).map((_, i) => (
-              <Skeleton key={i} className="h-[300px] rounded-lg" />
-            ))}
-          </div>
-        ) : (
-          services && <ServiceCards services={services} />
-        )}
-      </section>
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="py-24 bg-background"
+      >
+        <div className="container px-4 mx-auto">
+          <motion.h2 
+            className="text-3xl md:text-4xl font-bold text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            Our Services
+          </motion.h2>
+
+          {servicesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array(3).fill(null).map((_, i) => (
+                <Skeleton key={i} className="h-[300px] rounded-lg" />
+              ))}
+            </div>
+          ) : (
+            services && <ServiceCards services={services} />
+          )}
+        </div>
+      </motion.section>
+
+      {/* Partners Section */}
+      <PartnersSection />
 
       {/* About Section */}
-      <section className="bg-muted/50 py-24">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-6">About Xcelliti</h2>
-            <p className="text-lg text-muted-foreground mb-8">
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="py-24 bg-gradient-to-b from-background to-muted"
+      >
+        <div className="container px-4 mx-auto">
+          <div className="max-w-3xl mx-auto text-center space-y-6">
+            <motion.h2 
+              className="text-3xl md:text-4xl font-bold"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              About Xcelliti
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-muted-foreground"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               Xcelliti provides customer-centric services and solutions to add value for everyday life.
               Highly regarded specifically for its Quality Services & Consultancy business, we continue
               to offer solutions and services for Customized Business Solution Development, Software Testing,
               and Training & Consultancy & Resource Outsourcing.
-            </p>
-            <p className="text-lg text-muted-foreground">
+            </motion.p>
+            <motion.p 
+              className="text-lg text-muted-foreground"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
               Our sole purpose of existence is to build trustworthy relationships while providing
               Information Technology solutions to our clients that create the best return on their
               investment, maximize their production and facilitate their growth.
-            </p>
+            </motion.p>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Clients Section */}
-      <section className="py-24">
-        <div className="container">
-          <h2 className="text-4xl font-bold text-center mb-12">Our Clients</h2>
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="py-24 bg-background"
+      >
+        <div className="container px-4 mx-auto">
+          <motion.h2 
+            className="text-3xl md:text-4xl font-bold text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            Our Clients
+          </motion.h2>
           {clientsLoading ? (
             <Skeleton className="h-[100px] rounded-lg" />
           ) : (
             clients && <ClientCarousel clients={clients} />
           )}
         </div>
-      </section>
+      </motion.section>
 
       {/* Contact Section */}
-      <section className="bg-muted/50 py-24">
-        <div className="container">
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="py-24 bg-gradient-to-b from-background to-muted"
+      >
+        <div className="container px-4 mx-auto">
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">Get in Touch</h2>
-            <div className="bg-background rounded-lg p-8 shadow-lg">
+            <motion.h2 
+              className="text-3xl md:text-4xl font-bold text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              Get in Touch
+            </motion.h2>
+            <motion.div 
+              className="bg-card rounded-lg p-8 shadow-lg"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <ContactForm />
-            </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

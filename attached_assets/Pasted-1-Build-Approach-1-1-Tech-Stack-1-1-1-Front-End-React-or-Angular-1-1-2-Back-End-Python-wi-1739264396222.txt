@@ -1,0 +1,129 @@
+1. Build Approach:
+1.1. Tech Stack:
+1.1.1. Front-End: React or Angular
+1.1.2. Back-End: Python with Django or Flask OR Node.js
+1.1.3. Database: PostgreSQL or MongoDB
+1.1.3.1. Efficient Database Schemas
+1.1.4. CMS: Mezzanine or Wagtail (Django), Drupal or WordPress,
+KeystoneJS, Strapi, or Ghost (Node.js)
+1.2. Responsive Design
+1.2.1. Flexible Grid Foundation (Bootstrap or Foundation if needed, else
+CSS-in-JS, CSS Grid or Flexbox, Grid Libraries or Angular
+Flex-Layout
+1.2.1.1. Dynamic Styles
+1.2.1.2. Media Queries
+1.2.1.3. Custom CSS
+1.2.2. Flexible Media
+1.2.3. Touch Gestures
+1.2.4. Performance Optimization
+1.2.4.1. caching for performance.
+1.2.4.2. Minimize load times
+1.2.4.2.1. Optimized images
+1.2.4.2.2. Prioritized content loading
+1.2.4.2.3. minimized CSS/JavaScript
+2. Appearance
+2.1. Minimalistic design with high-tech elements
+2.2. Easy-to-read fonts
+2.3. Xcelliti Color Scheme
+2.3.1. RBG - Red: 226 | Green: 107 | Blue: 10
+2.3.2. Dark 242 107 35
+2.3.3. Light 248 159 82
+2.3.4. Grey 57 54 54
+2.3.5. Logo RGB
+2.4. Interactive elements should be user-friendly and functional
+3. Features
+3.1. Home Page
+3.1.1. Services on Slides (Top)
+3.1.1.1. With Bright Image OR Video ( https://www.systemsltd.com/PK )
+Backgrounds and Just Headers
+3.1.1.2. Image should Zoom In or Out and Gets Blurred
+3.1.1.3. Text Appears due to Cursor or Touch Events
+3.1.1.4. Every Image should be a Hyperlink leading to the Respective
+Section of “Service Spectrum” page
+3.1.1.5. Check (https://www.tcs.com)
+3.1.2. Services as 3D Cards (Middle)
+3.1.2.1. 3D carousel cards with Images
+3.1.2.2. Image should Exit when Small description of Service Appears
+on the Card
+3.1.2.3. Card should be Responsive and Interactive on Cursor and
+Touch Events
+3.1.2.4. Every Card should be a Hyperlink leading to the Respective
+Section of “Service Spectrum” page
+3.1.2.5. Check (https://www.accenture.com/sk-en)
+3.1.3. Latest from Xcelliti (On right of Services)
+3.1.3.1. Latest Social Media Post
+3.1.3.2. Latest Events
+3.1.3.3. Check ( https://netsoltech.com/ )
+3.1.4. Clients (Beneath Services)
+3.1.4.1. A Continuous Stream of Clients Logos
+3.1.4.1.1. Every Logo must be a Hyperlink leading to the
+respective section of “WOW Tales” page
+3.1.4.2. High Resolution Logos… Logos may needed to be re-created
+3.1.5. Partners (Beneath Clients)
+3.1.5.1.
+3.1.6. Chatbot Icon (Bottom Right Corner)
+3.1.6.1. Chatbot Integration (Intercom, Drift, Freshchat, Zendesk
+Chat,Tidio, Rasa, Botpress, or ChatterBot)
+3.1.6.2. Should be Optimized for both Desktop and Mobile.
+3.1.6.3. Check ( https://www.kualitatem.com )
+3.1.7. Connect Us (Contact Form)
+3.1.8. Footer with Links to all pages and even sections within the pages
+3.2. Discover Xcelliti (About Us)
+3.2.1. Mission and Vision + Innovation and Technology
+3.2.1.1. Text with Slight Animations
+3.2.2. Corporate Values + Corporate Responsibility
+3.2.2.1. Text with Slight Animations
+3.2.3. Company History
+3.2.3.1. Timeline
+3.2.3.2. Statistics
+3.2.3.2.1. Increasing Number Animation
+3.2.4.
+3.2.5. Leadership Team
+3.2.5.1. Profiles with LinkedIn Links (3D Interactive carousel cards)
+3.2.5.1.1. Muhammad Kashif Jamil (CEO)
+3.2.5.1.2. Ali Ataullah Khan (Head of Operations)
+3.2.6. Contact In
+3.3. WOW Tales (Case Studies…History of Projects… Customer Stories)
+3.3.1. For Every Project, there Should be a Success Story
+3.3.1.1. Stories
+3.3.1.2. Products Used
+3.3.1.3. Customer Testimonials
+3.3.2. Story can be with Client Logo or any relatable image background
+3.4. Service Spectrum (Services)
+3.4.1. 06 Services (Can be increased later)
+3.4.2. Services with their Small Descriptions
+3.5. Join Xcelliti(Careers)
+3.5.1. Job Posts
+3.5.2. Admin Panel Required to Manage Them
+3.5.3. Database connection required at backend
+3.6. Knowledge Vault (Blogs and Insights)
+3.6.1. A Page where some Blogs and Articles can be Posted
+3.6.2. An Admin Panel required to manage the content
+3.7. Talk 2 Us (Contact Form and Details)
+3.7.1. Company Details
+3.7.1.1. Phone Number
+3.7.1.2. Location
+3.7.2. Contact Form
+3.7.2.1. Name
+3.7.2.2. Email Address
+3.7.2.3. Contact / Whatsapp No.
+3.7.2.4. Questions / Comments
+3.7.3. Responses from these Forms should land in a Database
+3.7.4. Request a Call Button
+3.7.5. Give us a Call Button
+3.7.5.1. Buttons can be on home screen too
+4. Maintenance and Expansion
+4.1. Need a CMS System for Addition and Changing of Content
+4.2. Website’s Framework should be Expandable
+4.2.1. Services (06 to 10)
+4.2.2. Customers (15 to 50)
+4.2.3. Should be Supporting these Changes
+4.3. One Year Support Required
+5. SEO
+5.1. Basic SEO should be done
+5.1.1. Addition of relevant keywords
+5.1.2. Use of Descriptive URLs
+6. Accessibility
+6.1. Should be accessible from and be optimized for all devices
+7. Analytics
+7.1. Website Analytics should be shown on the Admin Panel

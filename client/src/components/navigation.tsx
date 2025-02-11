@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ThemeToggle } from "./theme-toggle";
+import { cn } from "@/lib/utils";
 
 export const navItems = [
   { path: "/", label: "Home" },
@@ -30,8 +32,10 @@ function Navigation() {
         <NavigationMenuItem key={path}>
           <Link href={path}>
             <NavigationMenuLink
-              className={navigationMenuTriggerStyle()}
-              active={location === path}
+              className={cn(
+                navigationMenuTriggerStyle(),
+                location === path && "text-primary font-semibold"
+              )}
             >
               {label}
             </NavigationMenuLink>
@@ -43,33 +47,39 @@ function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="mr-4 flex">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">Xcelliti</span>
           </Link>
+
+          {!isMobile && (
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavLinks />
+              </NavigationMenuList>
+            </NavigationMenu>
+          )}
         </div>
 
-        {isMobile ? (
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <nav className="flex flex-col gap-4">
-                <NavLinks />
-              </nav>
-            </SheetContent>
-          </Sheet>
-        ) : (
-          <NavigationMenu className="ml-auto">
-            <NavigationMenuList>
-              <NavLinks />
-            </NavigationMenuList>
-          </NavigationMenu>
-        )}
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+
+          {isMobile && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                <nav className="flex flex-col gap-4 mt-6">
+                  <NavLinks />
+                </nav>
+              </SheetContent>
+            </Sheet>
+          )}
+        </div>
       </div>
     </header>
   );

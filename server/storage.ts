@@ -4,7 +4,13 @@ import {
   type Job, type InsertJob,
   type ContactSubmission, type InsertContact,
   type Client, type InsertClient,
-  type Admin, type InsertAdmin
+  type Admin, type InsertAdmin,
+  type Partner, type InsertPartner
+} from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import {
+  services, blogPosts, jobs, contactSubmissions, clients, partners, admins,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -37,153 +43,170 @@ export interface IStorage {
   updateClient(id: number, client: Partial<InsertClient>): Promise<Client>;
   deleteClient(id: number): Promise<void>;
 
+  // Partners
+  getPartners(): Promise<Partner[]>;
+  createPartner(partner: InsertPartner): Promise<Partner>;
+  updatePartner(id: number, partner: Partial<InsertPartner>): Promise<Partner>;
+  deletePartner(id: number): Promise<void>;
+
   // Admin
   getAdminByUsername(username: string): Promise<Admin | undefined>;
   createAdmin(admin: InsertAdmin): Promise<Admin>;
 }
 
-export class MemStorage implements IStorage {
-  private services: Map<number, Service> = new Map();
-  private blogPosts: Map<number, BlogPost> = new Map();
-  private jobs: Map<number, Job> = new Map();
-  private contactSubmissions: Map<number, ContactSubmission> = new Map();
-  private clients: Map<number, Client> = new Map();
-  private admins: Map<number, Admin> = new Map();
-  private currentIds: { [key: string]: number } = {
-    services: 1,
-    blogPosts: 1,
-    jobs: 1,
-    contactSubmissions: 1,
-    clients: 1,
-    admins: 1
-  };
-
+export class DatabaseStorage implements IStorage {
   // Services
   async getServices(): Promise<Service[]> {
-    return Array.from(this.services.values());
+    return await db.select().from(services).orderBy(services.order);
   }
 
   async createService(service: InsertService): Promise<Service> {
-    const id = this.currentIds.services++;
-    const newService = { ...service, id };
-    this.services.set(id, newService);
+    const [newService] = await db.insert(services).values(service).returning();
     return newService;
   }
 
   async updateService(id: number, service: Partial<InsertService>): Promise<Service> {
-    const existing = this.services.get(id);
-    if (!existing) throw new Error("Service not found");
-    const updated = { ...existing, ...service };
-    this.services.set(id, updated);
+    const [updated] = await db.update(services)
+      .set(service)
+      .where(eq(services.id, id))
+      .returning();
+    if (!updated) throw new Error("Service not found");
     return updated;
   }
 
   async deleteService(id: number): Promise<void> {
-    this.services.delete(id);
+    await db.delete(services).where(eq(services.id, id));
   }
 
   // Blog Posts
   async getBlogPosts(includeUnpublished = false): Promise<BlogPost[]> {
-    return Array.from(this.blogPosts.values())
-      .filter(post => includeUnpublished || post.isPublished);
+    const query = db.select().from(blogPosts);
+    if (!includeUnpublished) {
+      query.where(eq(blogPosts.isPublished, true));
+    }
+    return await query.orderBy(blogPosts.publishedAt);
   }
 
   async getBlogPost(id: number): Promise<BlogPost | undefined> {
-    return this.blogPosts.get(id);
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    return post;
   }
 
   async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
-    const id = this.currentIds.blogPosts++;
-    const newPost = { ...post, id, publishedAt: new Date() };
-    this.blogPosts.set(id, newPost);
+    const [newPost] = await db.insert(blogPosts).values(post).returning();
     return newPost;
   }
 
   async updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost> {
-    const existing = this.blogPosts.get(id);
-    if (!existing) throw new Error("Blog post not found");
-    const updated = { ...existing, ...post };
-    this.blogPosts.set(id, updated);
+    const [updated] = await db.update(blogPosts)
+      .set(post)
+      .where(eq(blogPosts.id, id))
+      .returning();
+    if (!updated) throw new Error("Blog post not found");
     return updated;
   }
 
   async deleteBlogPost(id: number): Promise<void> {
-    this.blogPosts.delete(id);
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
   }
 
   // Jobs
   async getJobs(includeInactive = false): Promise<Job[]> {
-    return Array.from(this.jobs.values())
-      .filter(job => includeInactive || job.isActive);
+    const query = db.select().from(jobs);
+    if (!includeInactive) {
+      query.where(eq(jobs.isActive, true));
+    }
+    return await query;
   }
 
   async createJob(job: InsertJob): Promise<Job> {
-    const id = this.currentIds.jobs++;
-    const newJob = { ...job, id };
-    this.jobs.set(id, newJob);
+    const [newJob] = await db.insert(jobs).values(job).returning();
     return newJob;
   }
 
   async updateJob(id: number, job: Partial<InsertJob>): Promise<Job> {
-    const existing = this.jobs.get(id);
-    if (!existing) throw new Error("Job not found");
-    const updated = { ...existing, ...job };
-    this.jobs.set(id, updated);
+    const [updated] = await db.update(jobs)
+      .set(job)
+      .where(eq(jobs.id, id))
+      .returning();
+    if (!updated) throw new Error("Job not found");
     return updated;
   }
 
   async deleteJob(id: number): Promise<void> {
-    this.jobs.delete(id);
+    await db.delete(jobs).where(eq(jobs.id, id));
   }
 
   // Contact Submissions
   async getContactSubmissions(): Promise<ContactSubmission[]> {
-    return Array.from(this.contactSubmissions.values());
+    return await db.select().from(contactSubmissions).orderBy(contactSubmissions.createdAt);
   }
 
   async createContactSubmission(submission: InsertContact): Promise<ContactSubmission> {
-    const id = this.currentIds.contactSubmissions++;
-    const newSubmission = { ...submission, id, createdAt: new Date() };
-    this.contactSubmissions.set(id, newSubmission);
+    const [newSubmission] = await db.insert(contactSubmissions)
+      .values(submission)
+      .returning();
     return newSubmission;
   }
 
   // Clients
   async getClients(): Promise<Client[]> {
-    return Array.from(this.clients.values());
+    return await db.select().from(clients).orderBy(clients.order);
   }
 
   async createClient(client: InsertClient): Promise<Client> {
-    const id = this.currentIds.clients++;
-    const newClient = { ...client, id };
-    this.clients.set(id, newClient);
+    const [newClient] = await db.insert(clients).values(client).returning();
     return newClient;
   }
 
   async updateClient(id: number, client: Partial<InsertClient>): Promise<Client> {
-    const existing = this.clients.get(id);
-    if (!existing) throw new Error("Client not found");
-    const updated = { ...existing, ...client };
-    this.clients.set(id, updated);
+    const [updated] = await db.update(clients)
+      .set(client)
+      .where(eq(clients.id, id))
+      .returning();
+    if (!updated) throw new Error("Client not found");
     return updated;
   }
 
   async deleteClient(id: number): Promise<void> {
-    this.clients.delete(id);
+    await db.delete(clients).where(eq(clients.id, id));
+  }
+
+  // Partners
+  async getPartners(): Promise<Partner[]> {
+    return await db.select().from(partners).orderBy(partners.order);
+  }
+
+  async createPartner(partner: InsertPartner): Promise<Partner> {
+    const [newPartner] = await db.insert(partners).values(partner).returning();
+    return newPartner;
+  }
+
+  async updatePartner(id: number, partner: Partial<InsertPartner>): Promise<Partner> {
+    const [updated] = await db.update(partners)
+      .set(partner)
+      .where(eq(partners.id, id))
+      .returning();
+    if (!updated) throw new Error("Partner not found");
+    return updated;
+  }
+
+  async deletePartner(id: number): Promise<void> {
+    await db.delete(partners).where(eq(partners.id, id));
   }
 
   // Admin
   async getAdminByUsername(username: string): Promise<Admin | undefined> {
-    return Array.from(this.admins.values())
-      .find(admin => admin.username === username);
+    const [admin] = await db.select()
+      .from(admins)
+      .where(eq(admins.username, username));
+    return admin;
   }
 
   async createAdmin(admin: InsertAdmin): Promise<Admin> {
-    const id = this.currentIds.admins++;
-    const newAdmin = { ...admin, id };
-    this.admins.set(id, newAdmin);
+    const [newAdmin] = await db.insert(admins).values(admin).returning();
     return newAdmin;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

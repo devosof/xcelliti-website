@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 import Home from "@/pages/home";
@@ -37,9 +38,11 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router />
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="system" storageKey="xcelliti-theme">
+      <QueryClientProvider client={queryClient}>
+        <Router />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

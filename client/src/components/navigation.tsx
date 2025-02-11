@@ -12,6 +12,7 @@ import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 export const navItems = [
   { path: "/", label: "Home" },
@@ -22,6 +23,8 @@ export const navItems = [
   { path: "/contact", label: "Contact" },
 ];
 
+const MotionLink = motion(Link);
+
 function Navigation() {
   const isMobile = useIsMobile();
   const [location] = useLocation();
@@ -30,24 +33,32 @@ function Navigation() {
     <>
       {navItems.map(({ path, label }) => (
         isMobile ? (
-          <Link key={path} href={path}>
+          <MotionLink
+            key={path}
+            href={path}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <Button
               variant="ghost"
               className={cn(
                 "w-full justify-start",
-                location === path && "text-primary font-semibold"
+                location === path && "bg-primary/10 text-primary font-semibold"
               )}
             >
               {label}
             </Button>
-          </Link>
+          </MotionLink>
         ) : (
           <NavigationMenuItem key={path}>
             <Link href={path}>
               <NavigationMenuLink
                 className={cn(
                   navigationMenuTriggerStyle(),
-                  location === path && "text-primary font-semibold"
+                  "transition-colors duration-300",
+                  location === path 
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "hover:bg-primary/5"
                 )}
               >
                 {label}
@@ -60,11 +71,22 @@ function Navigation() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <motion.header 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    >
       <div className="container flex h-16 items-center justify-between py-4">
-        <div className="flex items-center gap-6">
+        <motion.div 
+          className="flex items-center gap-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">Xcelliti</span>
+            <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+              Xcelliti
+            </span>
           </Link>
 
           {!isMobile && (
@@ -74,16 +96,21 @@ function Navigation() {
               </NavigationMenuList>
             </NavigationMenu>
           )}
-        </div>
+        </motion.div>
 
-        <div className="flex items-center gap-4">
+        <motion.div 
+          className="flex items-center gap-4"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           <ThemeToggle />
 
           {isMobile && (
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="hover:bg-primary/5">
+                  <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
@@ -93,9 +120,9 @@ function Navigation() {
               </SheetContent>
             </Sheet>
           )}
-        </div>
+        </motion.div>
       </div>
-    </header>
+    </motion.header>
   );
 }
 

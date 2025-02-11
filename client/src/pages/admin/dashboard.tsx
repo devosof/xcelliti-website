@@ -54,6 +54,7 @@ import {
   type Client,
   insertPartnerSchema,
   insertClientSchema,
+  insertBlogPostSchema, // Added schema for blog post
 } from "@shared/schema";
 import { AlertCircle, CheckCircle2, Plus, Loader2 } from "lucide-react";
 
@@ -64,6 +65,8 @@ function Dashboard() {
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [editingPartnerId, setEditingPartnerId] = useState<number | null>(null);
   const [editingClientId, setEditingClientId] = useState<number | null>(null);
+  const [isAddingPost, setIsAddingPost] = useState(false); // Added state for adding post
+  const [editingPostId, setEditingPostId] = useState<number | null>(null); // Added state for editing post
 
   // Existing queries
   const { data: posts, isLoading: postsLoading, error: postsError } = useQuery<BlogPost[]>({
@@ -107,6 +110,19 @@ function Dashboard() {
       logo: "",
       description: "",
       order: 1,
+    },
+  });
+
+  const postForm = useForm({
+    resolver: zodResolver(insertBlogPostSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      author: "",
+      category: "",
+      excerpt: "",
+      thumbnail: "",
+      isPublished: false,
     },
   });
 
@@ -249,6 +265,54 @@ function Dashboard() {
     },
   });
 
+  // Blog Post mutations
+  const addPost = useMutation({
+    mutationFn: async (data: z.infer<typeof insertBlogPostSchema>) => {
+      const res = await fetch("/api/blog-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to add post");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
+      setIsAddingPost(false);
+      toast({ title: "Post added successfully" });
+    },
+  });
+
+  const updatePost = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<z.infer<typeof insertBlogPostSchema>> }) => {
+      const res = await fetch(`/api/blog-posts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update post");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
+      setEditingPostId(null);
+      toast({ title: "Post updated successfully" });
+    },
+  });
+
+  const deletePost = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/blog-posts/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete post");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
+      toast({ title: "Post deleted successfully" });
+    },
+  });
+
   // Existing mutations
   const togglePostPublish = useMutation({
     mutationFn: async (post: BlogPost) => {
@@ -322,8 +386,11 @@ function Dashboard() {
 
         <TabsContent value="blog">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Blog Posts</CardTitle>
+              <Button onClick={() => setIsAddingPost(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Add Post
+              </Button>
             </CardHeader>
             <CardContent>
               {postsError ? (
@@ -358,13 +425,37 @@ function Dashboard() {
                         <TableCell>
                           {format(new Date(post.publishedAt), "PP")}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="space-x-2">
                           <Button
                             variant="outline"
                             onClick={() => togglePostPublish.mutate(post)}
                             disabled={togglePostPublish.isPending}
                           >
                             {togglePostPublish.isPending ? "Updating..." : "Toggle Publish"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              postForm.reset({
+                                title: post.title,
+                                content: post.content,
+                                author: post.author,
+                                category: post.category || "",
+                                excerpt: post.excerpt || "",
+                                thumbnail: post.thumbnail || "",
+                                isPublished: post.isPublished,
+                              });
+                              setEditingPostId(post.id);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => deletePost.mutate(post.id)}
+                            disabled={deletePost.isPending}
+                          >
+                            Delete
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -374,8 +465,67 @@ function Dashboard() {
               )}
             </CardContent>
           </Card>
+
+          <Dialog open={isAddingPost || editingPostId !== null} onOpenChange={() => { setIsAddingPost(false); setEditingPostId(null); postForm.reset(); }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{isAddingPost ? "Add Post" : "Edit Post"}</DialogTitle>
+              </DialogHeader>
+              <Form {...postForm}>
+                <form onSubmit={postForm.handleSubmit((data) => {
+                  if (editingPostId) {
+                    updatePost.mutate({ id: editingPostId, data });
+                  } else {
+                    addPost.mutate(data);
+                  }
+                })} className="space-y-4">
+                  <FormField control={postForm.control} name="title" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={postForm.control} name="content" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Content</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="textarea" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={postForm.control} name="author" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Author</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  {/* Add other fields as needed from insertBlogPostSchema */}
+                  <DialogFooter>
+                    <Button type="submit" disabled={addPost.isPending || updatePost.isPending} className="w-full">
+                      {addPost.isPending || updatePost.isPending ? (
+                        <div className="flex items-center">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          {isAddingPost ? "Adding..." : "Updating..."}
+                        </div>
+                      ) : (
+                        isAddingPost ? "Add Post" : "Update Post"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
+        {/*Rest of the tabs remain unchanged */}
         <TabsContent value="jobs">
           <Card>
             <CardHeader>
@@ -868,8 +1018,7 @@ function Dashboard() {
                               </div>
                             </DialogContent>
                           </Dialog>
-                        </TableCell>
-                      </TableRow>
+                        </TableCell>                      </TableRow>
                     ))}
                   </TableBody>
                 </Table>

@@ -92,9 +92,23 @@ function Blog() {
                     <p className="text-muted-foreground line-clamp-4 mb-4">
                       {post.excerpt || post.content}
                     </p>
-                    <Button variant="outline" className="w-full">
-                      Read More
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                          Read More
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                          <DialogTitle>{post.title}</DialogTitle>
+                        </DialogHeader>
+                        <div className="mt-4">
+                          <div className="prose dark:prose-invert max-w-none">
+                            {post.content}
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </CardContent>
                 </Card>
               </motion.div>
